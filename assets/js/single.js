@@ -1,4 +1,22 @@
 var issuesContainerEl = document.querySelector("#issues-container");
+var limitWarning = document.querySelector("#limit-warning");
+var repoNameEl = document.querySelector("#repo-name");
+
+var getRepoName = function() {
+    //grab the rep from url string
+    var queryString = document.location.search;
+    var repoName = queryString.split("=")[1];
+
+    if (repoName) {
+        //display the repo
+        repoNameEl.textContent = repoName;
+        getRepoIssues(repoName);
+    } else {
+        //if no repo was given, redirect to home page
+        document.location.replace("./index.html");
+    }
+    
+};
 
 var getRepoIssues = function(repo) {
     var apiUrl = "https://api.github.com/repos/" + repo +"/issues?direction=asc";
@@ -8,9 +26,16 @@ var getRepoIssues = function(repo) {
         if(response.ok) {
             response.json().then(function(data) {
                 displayIssues(data);
+
+                //check if api has paginated issues
+                if (response.headers.get("link")) {
+                    displayWarning(repo);
+                }
             })
         } else {
-            alert("there was a problem with your request");
+            //if not suucessful, redirect the user to homepage
+            document.location.replace("./index.html");
+            // alert("there was a problem with your request");
         }
     })
 };
@@ -53,6 +78,17 @@ var displayIssues = function(issues) {
     }
 };
 
+var displayWarning = function(repo) {
+    limitWarning.textContent = "This repo has more than 30 issues, visit ";
+
+    var linkEl = document.createElement("a");
+    linkEl.textContent = "Github to See More Issues";
+    linkEl.setAttribute("href", "https://github.com/" + repo + "/issues");
+    linkEl.setAttribute("target", "_blank");
+
+    //append to limitwarning
+    limitWarning.appendChild(linkEl);
+};
 
 
-getRepoIssues("pravton/taskinator");
+getRepoName();
